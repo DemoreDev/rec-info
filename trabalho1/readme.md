@@ -25,6 +25,13 @@ Instale as dependências do projeto:
 pip install -r requirements.txt
 ```
 
+Baixe os recursos do NLTK utilizados no pré-processamento (lista de stopwords em
+inglês):
+
+```bash
+python -c "import nltk; nltk.download('stopwords')"
+```
+
 ## Execução
 
 Inicie o Jupyter:
@@ -40,8 +47,8 @@ Abra o arquivo `main.ipynb` e execute as células na ordem apresentada. O notebo
 - Linguagem: Python 3.12.3
 - `pandas`: manipulação e exportação dos dados em formato tabular.
 - `ir_datasets`: carregamento da base de recuperação de informação Cranfield.
-- `scikit-learn`: [DESCREVER O USO, SE APLICÁVEL].
-- `numpy`: [DESCREVER O USO, SE APLICÁVEL].
+- `nltk`: pré-processamento textual — lista de stopwords em inglês e stemmer de Porter.
+- `numpy`: operações numéricas auxiliares no cálculo das métricas de avaliação.
 - `matplotlib` e `seaborn`: produção de gráficos e tabelas de resultados.
 - Jupyter/IPython: execução do notebook.
 
