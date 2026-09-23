@@ -70,3 +70,11 @@ O notebook transforma os dados em três arquivos CSV locais:
 - `data/cranfield_queries.csv`: consultas da base.
 - `data/cranfield_qrels.csv`: julgamentos de relevância das consultas em relação aos documentos.
 
+## Resultados dos experimentos
+
+A execução do notebook grava os resultados em um diretório por requisito:
+
+- `results_req4/metricas_por_consulta.csv`: métricas por consulta (P@10, R@10, AP, NDCG@10) para cada combinação de modelo e configuração de pré-processamento — 1800 linhas.
+- `results_req4/metricas_agregadas.csv`: médias sobre as 225 consultas.
+- `results_req5/comparacao_modelos.png`: gráficos da comparação entre o Modelo Vetorial e o BM25.
+
