@@ -4,7 +4,7 @@ Modelo Vetorial e BM25 sobre a coleção **Cranfield**, implementados em Python 
 (bibliotecas apenas para pré-processamento e gráficos). Notebook: `main.ipynb`.
 
 **Coleção:** 1400 documentos, 225 consultas, 1837 julgamentos. Graus `-1` e `1..4`,
-onde **4 = *complete answer*** e 1 = *minimum interest*. Relevante = grau ≥ 1;
+onde **1 = *complete answer*** e 4 = *minimum interest* (a escala é decrescente). Relevante = grau ≥ 1;
 `-1` e não julgados = não relevantes. Todas as consultas têm ≥ 1 relevante.
 
 **Decisões globais:** indexa apenas o campo `text` (já contém o título em 1399/1400
@@ -58,19 +58,20 @@ intervalo vai a 2,699 e **continua subindo**.
 
 ## R4 · Avaliação quantitativa
 
-Métricas: P@10, R@10, MAP (exigidas) + NDCG@10 (ganho linear, IDCG da própria consulta).
+Métricas: P@10, R@10, MAP (exigidas) + NDCG@10 (ganho **5 − grau**, invertido porque o grau 1 é o
+mais relevante; IDCG da própria consulta).
 MAP sobre o ranking completo. 2 modelos × 4 configs × 225 consultas.
 
 | modelo | config | P@10 | R@10 | MAP | NDCG@10 |
 |---|---|---|---|---|---|
-| bm25 | stopwords+stemming | 0,2356 | 0,3991 | **0,3050** | 0,3392 |
-| bm25 | stemming | 0,2276 | 0,3882 | 0,2951 | 0,3280 |
-| bm25 | stopwords | 0,2240 | 0,3801 | 0,2803 | 0,3170 |
-| vetorial | stopwords+stemming | 0,2120 | 0,3681 | 0,2718 | 0,3008 |
-| bm25 | nada | 0,2164 | 0,3670 | 0,2694 | 0,3066 |
-| vetorial | stemming | 0,2027 | 0,3532 | 0,2589 | 0,2861 |
-| vetorial | stopwords | 0,1987 | 0,3368 | 0,2475 | 0,2768 |
-| vetorial | nada | 0,1933 | 0,3262 | 0,2396 | 0,2674 |
+| bm25 | stopwords+stemming | 0,2356 | 0,3991 | **0,3050** | 0,3676 |
+| bm25 | stemming | 0,2276 | 0,3882 | 0,2951 | 0,3599 |
+| bm25 | stopwords | 0,2240 | 0,3801 | 0,2803 | 0,3439 |
+| vetorial | stopwords+stemming | 0,2120 | 0,3681 | 0,2718 | 0,3285 |
+| bm25 | nada | 0,2164 | 0,3670 | 0,2694 | 0,3344 |
+| vetorial | stemming | 0,2027 | 0,3532 | 0,2589 | 0,3146 |
+| vetorial | stopwords | 0,1987 | 0,3368 | 0,2475 | 0,3022 |
+| vetorial | nada | 0,1933 | 0,3262 | 0,2396 | 0,2924 |
 
 - **BM25 vence nas 4 métricas, em todas as 4 configs.** O pior BM25 (0,2694) empata com o
   melhor Vetorial (0,2718): o modelo pesa tanto quanto o pré-processamento.
@@ -148,9 +149,11 @@ Top-5 cai de **218 para 95 termos** (≈ avgdl), o relevante de 81 termos entra 
 Cinco reformulações manuais, justificadas pelo texto da consulta e conhecimento de domínio —
 **nunca pelos qrels**, cujo uso para ajustar rankings o enunciado proíbe.
 
-**Reformular mexe muito e melhora pouco:** 4,4 de 10 documentos trocados no Top-10, P@10 médio
-idêntico (0,1100 → 0,1100), NDCG@10 médio **pior** (0,2450 → 0,2035). Dos 10 casos: 3 melhoram,
-4 pioram, 3 ficam iguais. Intervenção de alta variância, não ajuste confiável.
+**Reformular mexe muito no ranking, e as duas métricas discordam:** 4,4 de 10 documentos trocados,
+P@10 médio **idêntico** (0,1100 → 0,1100) mas NDCG@10 médio **melhor** (0,2143 → 0,2450). Dos 10
+casos: 4 melhoram, 3 pioram, 3 ficam iguais. Como o P@10 não se move, as reformulações não
+recuperaram *mais* relevantes — recuperaram relevantes *melhores*, ou os colocaram acima. O ganho
+é de qualidade do topo, não de cobertura, e só é visível porque o NDCG@10 usa os graus.
 
 - **q13 sai do zero** (acréscimo de termos do domínio: *shock wave*, *boundary layer*,
   *interaction*). O doc 265 entra no Top-10 nos dois modelos. É a confirmação prática do R6:
@@ -158,8 +161,8 @@ idêntico (0,1100 → 0,1100), NDCG@10 médio **pior** (0,2450 → 0,2035). Dos 
   junto dois vizinhos temáticos não relevantes — ela alarga de forma indiscriminada.
 - **q22 continua em zero.** Limpar termos conversacionais eliminou ruído mas não *acrescentou*
   nada: sem interseção, não há o que ponderar. Remoção de ruído ≠ expansão de vocabulário.
-- **q82 é o fracasso instrutivo.** Remover nomes de autores derrubou o NDCG@10 do BM25 de 0,545
-  para **0,276**: `kuchemann` tem **df=1, idf=6,84** e apontava
+- **q82 é o fracasso instrutivo.** Remover nomes de autores derrubou o NDCG@10 do BM25 de 0,540
+  para **0,275**: `kuchemann` tem **df=1, idf=6,84** e apontava
   exatamente para o artigo relevante. (`multhopp` sequer existe na coleção.)
 
 ## R9 · Análise de erros
@@ -189,9 +192,10 @@ correlacionada, e o julgamento "*references of no interest*" para quem já conhe
 > por construção da coleção. Há um teto na P@10 que não vem de falha de modelagem — advertência
 > necessária ao ler os números absolutos de R4 a R7.
 
-**Um relevante de grau 4 fora do Top-10:** q186, doc 1379, **posição 1116 de ~1400**. Compartilha
-**um** termo com a consulta: `flow`, o mais frequente da coleção (idf 0,65). É o oposto exato dos
-dois primeiros — casamento lexical mínimo, relevância máxima.
+**Um relevante de grau 1 fora do Top-10:** q176, doc 583, **posição 939 de ~1400**. Compartilha
+**um** termo com a consulta: `use`, um verbo genérico de idf 1,00 — e ainda assim é grau 1,
+*complete answer to the question*. É o oposto exato dos dois primeiros: casamento lexical quase
+nulo com relevância máxima.
 
 ---
 
