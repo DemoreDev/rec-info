@@ -64,6 +64,10 @@ Na primeira execução o notebook:
 4. calcula e guarda os scores do cross-encoder em `data/rerank/`;
 5. gera as respostas da LLM e as guarda em `results/rag_answers.json`.
 
+Os tempos de geração dos embeddings, do cross-encoder e da LLM são registrados quando esses
+resultados são calculados (com o notebook ligado na tomada) e guardados junto com o cache; os demais
+tempos (índice, consultas, fusão) são medidos a cada execução.
+
 Esses arquivos não fazem parte da entrega (podem ser regerados), exceto `results/rag_answers.json`,
 que é mantido porque a avaliação humana se refere a essas respostas específicas. Com os caches
 presentes, uma nova execução completa leva poucos minutos.

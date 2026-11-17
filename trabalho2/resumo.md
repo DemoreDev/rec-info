@@ -30,7 +30,7 @@ Mesma ordem do T1. A lematização (WordNet) recupera 65% do ganho do stemming c
 ## R2 · Índice invertido (do zero)
 
 `dict` termo → lista de `(doc_idx, tf)` + comprimentos + N + avgdl. **19.398 termos, 359.738 postings**
-(mediana 2 por termo; 47% dos termos com df = 1). Construção em 0,13 s; **0,26 ms por consulta**.
+(mediana 2 por termo; 47% dos termos com df = 1). Construção em 0,21 s; **0,44 ms por consulta**.
 Busca term-at-a-time: uma consulta toca em média **494 dos 3.633** documentos (13,6%).
 
 ## R3 · BM25
@@ -59,8 +59,8 @@ Casos à parte: em *Sexually Transmitted Fish Toxin* o erro *melhorou* a busca (
 
 **`BAAI/bge-small-en-v1.5`** (384 dimensões, cosseno, 512 tokens, 9,1% dos documentos truncados).
 Escolhido no dev entre 4 modelos: bge 0,3281 · e5 0,3215 · all-MiniLM 0,3028 · multi-qa-MiniLM
-0,2734 (abaixo do BM25). Embeddings dos documentos em 539 s; 122 ms por consulta, quase tudo na
-codificação da consulta (a busca exaustiva leva 6,5 ms).
+0,2734 (abaixo do BM25). Embeddings dos documentos em 539 s; 133 ms por consulta, quase tudo na
+codificação da consulta (a busca exaustiva leva 7,3 ms).
 
 ## R6 · Avaliação (test)
 
@@ -111,7 +111,22 @@ reranking, respostas em inglês. Prompt máximo de 2.943 tokens (sem truncamento
   174º no BM25 e 33º no semântico, cai para 76º no RRF e o cross-encoder nunca o vê (falha
   lexical + fusão).
 - **Respostas B:** 2,5 fontes citadas em média, **nenhum id fora do contexto**.
-- **Avaliação humana:** *pendente* (planilhas cegas em `avaliacao/`).
+- **Avaliação humana** (2 avaliadores, independente e às cegas; κ ponderado de 0,33 a 0,78, nunca mais de 1 ponto de diferença):
+
+| condição | fidelidade | completude | utilidade | rastreabilidade |
+|---|---|---|---|---|
+| A (sem RAG) | 0,65 | 1,05 | 0,85 | N/A |
+| B (com RAG) | **1,45** | **1,55** | **1,60** | 1,35 |
+
+  O RAG melhora em 8 de 10 consultas, empata em 2 e não piora em nenhuma. O maior ganho é na
+  fidelidade: sem contexto, a LLM repete crenças comuns que os documentos contradizem (nuggets "de
+  peito de frango", probiótico em jejum, "leite faz bem aos ossos"). Com contexto, os erros viram
+  leituras erradas de fontes, que as citações tornam detectáveis.
+- **R14:** *chicken nuggets* (+1,50; o documento-chave é o 1º em todos os estágios), *organic foods*
+  (0; o documento certo estava no contexto e foi mal lido — falha de geração), *coconut milk* (0; o
+  documento-chave chegou em 1º, mas o reranker promoveu um artigo sobre **cacau** e a LLM disse que os
+  documentos não tratavam de leite de coco — geração + contexto poluído) e *white/dark meat* (falha de
+  recuperação + fusão).
 
 ---
 
@@ -123,7 +138,8 @@ reranking, respostas em inglês. Prompt máximo de 2.943 tokens (sem truncamento
 2. **Um modelo "mais preciso" em geral não é melhor aqui.** O cross-encoder e o modelo multi-qa,
    treinados em pares pergunta-resposta, pioram numa coleção cuja relevância é temática (citação).
    Só a validação no dev revelou isso.
-3. **O gargalo do RAG é a primeira etapa da recuperação**: 65% dos relevantes das dez consultas não
-   aparecem em nenhum dos rankings iniciais.
+3. **O RAG ajuda quando o documento certo chega ao contexto**, e o gargalo é a primeira etapa da
+   recuperação: 65% dos relevantes das dez consultas não aparecem em nenhum dos rankings iniciais.
+   Quando o documento chega, as falhas restantes são de geração de um modelo pequeno (3B).
 4. **Hierarquia dos ganhos (NDCG@10, test):** fusão (+9,6% sobre o BM25) > modelo semântico (+4,0%) >
    pré-processamento (dev: +10,4%, sobre `nada`) > parâmetros do BM25 (dev: +0,7%) > reranking (−1,5%).
